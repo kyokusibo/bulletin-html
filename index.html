@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulletin Board for Kyoku</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        button, .like-button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .like-button {
+            background-color: #e0e0e0;
+            color: #333;
+            margin: 0;
+            padding: 5px 10px;
+        }
+        .like-button.liked {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        a {
+            display: block;
+            margin: 20px 0;
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .post {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+        }
+        .consent-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .consent-banner button {
+            margin-left: 20px;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+    </style>
+    <script>
+        let posts = [];
+        let editIndex = -1;
+
+        function trackEvent(eventName) {
+            if (!getCookie('cookies_consent')) return;
+            gtag('event', eventName, {
+                'event_category': 'interaction',
+                'event_label': eventName,
+                'value': 1
+            });
+
+            fetch('https://your-server-side-gtm-endpoint/track', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ event: eventName, timestamp: new Date().toISOString() }),
+            })
+            .then(response => response.json())
+            .then(data => console.log('Success:', data))
+            .catch((error) => console.error('Error:', error));
+        }
+
+        function trackPageView(pageName) {
+            if (!getCookie('cookies_consent')) return;
+            gtag('event', 'page_view', {
+                'page_title': pageName,
+                'page_location': window.location.href,
+                'page_path': window.location.pathname
+            });
+
+            fetch('https://your-server-side-gtm-endpoint/track', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ event: 'page_view', page_name: pageName, timestamp: new Date().toISOString() }),
+            })
+            .then(response => response.json())
+            .then(data => console.log('Page view tracked:', data))
+            .catch((error) => console.error('Error:', error));
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.container').forEach(container => container.style.display = 'none');
+            document.getElementById(pageId).style.display = 'block';
+            trackPageView(pageId);
+            if (pageId === 'managePostsPage') {
+                renderManagePosts();
+            }
+        }
+
+        function showPostForm(index = -1) {
+            editIndex = index;
+            document.getElementById('postForm').style.display = 'block';
+            document.getElementById('formTitle').textContent = index >= 0 ? 'Edit Post' : 'Add New Post';
+            if (index >= 0) {
+                document.getElementById('postTitle').value = posts[index].title;
+            } else {
+                document.getElementById('postTitle').value = '';
+            }
+        }
+
+        function hidePostForm() {
+            document.getElementById('postForm').style.display = 'none';
+        }
+
+        function savePost() {
+            const title = document.getElementById('postTitle').value;
+            if (title) {
+                if (editIndex >= 0) {
+                    posts[editIndex].title = title;
+                    editIndex = -1;
+                } else {
+                    posts.push({ title, liked: false });
+                }
+                hidePostForm();
+                renderPosts();
+                renderManagePosts();
+            }
+        }
+
+        function deletePost(index) {
+            posts.splice(index, 1);
+            renderPosts();
+            renderManagePosts();
+        }
+
+        function toggleLike(index) {
+            posts[index].liked = !posts[index].liked;
+            trackEvent(posts[index].liked ? 'add_like' : 'delete_like');
+            renderPosts();
+        }
+
+        function renderPosts() {
+            const postsContainer = document.getElementById('posts');
+            postsContainer.innerHTML = '';
+            posts.forEach((post, index) => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                postDiv.innerHTML = `
+                    <span>${post.title}</span>
+                    <span class="like-button ${post.liked ? 'liked' : ''}" onclick="toggleLike(${index})">❤️</span>
+                    <button onclick="showPostForm(${index})">Edit</button>
+                    <button onclick="deletePost(${index})">Delete</button>
+                `;
+                postsContainer.appendChild(postDiv);
+            });
+        }
+
+        function renderManagePosts() {
+            const managePostsContainer = document.getElementById('managePosts');
+            managePostsContainer.innerHTML = '';
+            posts.forEach((post, index) => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                postDiv.innerHTML = `
+                    <span>${post.title}</span>
+                    <button onclick="showPostForm(${index})">Edit</button>
+                    <button onclick="deletePost(${index})">Delete</button>
+                `;
+                managePostsContainer.appendChild(postDiv);
+            });
+        }
+
+        function showConsentBanner() {
+            if (!getCookie('cookies_consent')) {
+                document.getElementById('consentBanner').style.display = 'flex';
+            }
+        }
+
+        function acceptCookies() {
+            setCookie('cookies_consent', 'true', 365);
+            document.getElementById('consentBanner').style.display = 'none';
+            loadGTM();
+        }
+
+        function declineCookies() {
+            document.getElementById('consentBanner').style.display = 'none';
+        }
+
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function loadGTM() {
+            const gtagScript = document.createElement('script');
+            gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-Q0PEVWRF8V';
+            gtagScript.async = true;
+            document.head.appendChild(gtagScript);
+
+            const gtagInitScript = document.createElement('script');
+            gtagInitScript.innerHTML = `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-Q0PEVWRF8V');
+            `;
+            document.head.appendChild(gtagInitScript);
+
+            const gtmScript = document.createElement('script');
+            gtmScript.innerHTML = `
+                (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                })(window,document,'script','dataLayer','GTM-W83LVRV8');
+            `;
+            document.head.appendChild(gtmScript);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('mainPage');
+            showConsentBanner();
+            if (getCookie('cookies_consent')) {
+                loadGTM();
+            }
+        });
+    </script>
+</head>
+<body>
+    <div id="mainPage" class="container" style="display: none;">
+        <h1>Welcome to the Bulletin Board for Kyoku</h1>
+        <div class="nav-links">
+            <a href="#!" onclick="showPage('managePostsPage')">Manage Posts</a>
+        </div>
+        <button onclick="showPostForm()">Add New Post</button>
+        <a href="https://example.com" onclick="trackEvent('link_click')">Visit Example.com</a>
+        <div id="posts"></div>
+    </div>
+
+    <div id="managePostsPage" class="container" style="display: none;">
+        <h1>Manage Posts</h1>
+        <div class="nav-links">
+            <a href="#!" onclick="showPage('mainPage')">Back to Home</a>
+        </div>
+        <div id="managePosts"></div>
+    </div>
+
+    <div id="postForm" class="container" style="display: none;">
+        <h1 id="formTitle">Add New Post</h1>
+        <input type="text" id="postTitle" placeholder="Post Title">
+        <button onclick="savePost()">Save</button>
+        <button onclick="hidePostForm()">Cancel</button>
+    </div>
+
+    <div id="consentBanner" class="consent-banner" style="display: none;">
+        <span>We use cookies to improve your experience on our site. Do you accept the use of cookies?</span>
+        <div>
+            <button onclick="acceptCookies()">Accept</button>
+            <button onclick="declineCookies()">Decline</button>
+        </div>
+    </div>
+</body>
+</html>
