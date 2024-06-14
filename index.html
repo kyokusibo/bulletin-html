@@ -121,7 +121,7 @@
     <div id="mainPage" class="container">
         <h1>Welcome to the Bulletin Board</h1>
         <div class="nav-links">
-            <a href="#!" onclick="showPage('managePostsPage')">Manage Posts</a>
+            <a href="#" onclick="showPage('managePostsPage')">Manage Posts</a>
         </div>
         <button onclick="showPostForm()">Add New Post</button>
         <a href="https://example.com" onclick="trackEvent('link_click')">Visit Example.com</a>
@@ -132,7 +132,7 @@
     <div id="managePostsPage" class="container" style="display: none;">
         <h1>Manage Posts</h1>
         <div class="nav-links">
-            <a href="#!" onclick="showPage('mainPage')">Back to Home</a>
+            <a href="#" onclick="showPage('mainPage')">Back to Home</a>
         </div>
         <div id="managePosts"></div>
         <button class="consent-button" onclick="showConsentBanner()">Update Consent</button>
@@ -158,6 +158,7 @@
     <script>
         let posts = [];
         let editIndex = -1;
+        let currentPostTitle = '';
 
         function trackEvent(eventName) {
             if (getCookie('analytics_storage') !== 'granted') return;
@@ -183,6 +184,8 @@
             trackPageView(pageId);
             if (pageId === 'managePostsPage') {
                 renderManagePosts();
+            } else if (pageId === 'mainPage') {
+                renderPosts();
             }
         }
 
@@ -192,8 +195,10 @@
             document.getElementById('formTitle').textContent = index >= 0 ? 'Edit Post' : 'Add New Post';
             if (index >= 0) {
                 document.getElementById('postTitle').value = posts[index].title;
+                currentPostTitle = posts[index].title;
             } else {
                 document.getElementById('postTitle').value = '';
+                currentPostTitle = '';
             }
         }
 
@@ -266,25 +271,25 @@
         function acceptAllCookies() {
             setCookie('ad_storage', 'granted', 365);
             setCookie('analytics_storage', 'granted', 365);
-            reloadPage();
+            applyConsentChanges();
         }
 
         function acceptAdStorageOnly() {
             setCookie('ad_storage', 'granted', 365);
             setCookie('analytics_storage', 'denied', 365);
-            reloadPage();
+            applyConsentChanges();
         }
 
         function acceptAnalyticsStorageOnly() {
             setCookie('ad_storage', 'denied', 365);
             setCookie('analytics_storage', 'granted', 365);
-            reloadPage();
+            applyConsentChanges();
         }
 
         function denyAllCookies() {
             setCookie('ad_storage', 'denied', 365);
             setCookie('analytics_storage', 'denied', 365);
-            reloadPage();
+            applyConsentChanges();
         }
 
         function setCookie(name, value, days) {
@@ -305,12 +310,17 @@
             return null;
         }
 
-        function reloadPage() {
-            window.location.reload();
+        function applyConsentChanges() {
+            document.getElementById('consentBanner').style.display = 'none';
+            gtag('consent', 'update', {
+                'ad_storage': getCookie('ad_storage') === 'granted' ? 'granted' : 'denied',
+                'analytics_storage': getCookie('analytics_storage') === 'granted' ? 'granted' : 'denied'
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             showPage('mainPage');
+            renderPosts();
             showConsentBanner();
         });
     </script>
