@@ -103,12 +103,64 @@
             background-color: #0056b3;
         }
     </style>
+    <!-- Google Tag Manager -->
+    <script>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-W83LVRV8');
+    </script>
+    <!-- End Google Tag Manager -->
+</head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W83LVRV8"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div id="mainPage" class="container">
+        <h1>Welcome to the Bulletin Board</h1>
+        <div class="nav-links">
+            <a href="#!" onclick="showPage('managePostsPage')">Manage Posts</a>
+        </div>
+        <button onclick="showPostForm()">Add New Post</button>
+        <a href="https://example.com" onclick="trackEvent('link_click')">Visit Example.com</a>
+        <div id="posts"></div>
+        <button class="consent-button" onclick="showConsentBanner()">Update Consent</button>
+    </div>
+
+    <div id="managePostsPage" class="container" style="display: none;">
+        <h1>Manage Posts</h1>
+        <div class="nav-links">
+            <a href="#!" onclick="showPage('mainPage')">Back to Home</a>
+        </div>
+        <div id="managePosts"></div>
+        <button class="consent-button" onclick="showConsentBanner()">Update Consent</button>
+    </div>
+
+    <div id="postForm" class="container" style="display: none;">
+        <h1 id="formTitle">Add New Post</h1>
+        <input type="text" id="postTitle" placeholder="Post Title">
+        <button onclick="savePost()">Save</button>
+        <button onclick="hidePostForm()">Cancel</button>
+    </div>
+
+    <div id="consentBanner" class="consent-banner" style="display: none;">
+        <span>We use cookies to improve your experience on our site. Do you accept the use of cookies?</span>
+        <div>
+            <button onclick="acceptAllCookies()">Accept All</button>
+            <button onclick="acceptAdStorageOnly()">Accept Ad Storage Only</button>
+            <button onclick="acceptAnalyticsStorageOnly()">Accept Analytics Storage Only</button>
+            <button onclick="denyAllCookies()">Deny All</button>
+        </div>
+    </div>
+
     <script>
         let posts = [];
         let editIndex = -1;
 
         function trackEvent(eventName) {
-            if (!getCookie('analytics_storage') || getCookie('analytics_storage') === 'denied') return;
+            if (getCookie('analytics_storage') !== 'granted') return;
             gtag('event', eventName, {
                 'event_category': 'interaction',
                 'event_label': eventName,
@@ -117,7 +169,7 @@
         }
 
         function trackPageView(pageName) {
-            if (!getCookie('analytics_storage') || getCookie('analytics_storage') === 'denied') return;
+            if (getCookie('analytics_storage') !== 'granted') return;
             gtag('event', 'page_view', {
                 'page_title': pageName,
                 'page_location': window.location.href,
@@ -214,25 +266,25 @@
         function acceptAllCookies() {
             setCookie('ad_storage', 'granted', 365);
             setCookie('analytics_storage', 'granted', 365);
-            document.getElementById('consentBanner').style.display = 'none';
+            reloadPage();
         }
 
         function acceptAdStorageOnly() {
             setCookie('ad_storage', 'granted', 365);
             setCookie('analytics_storage', 'denied', 365);
-            document.getElementById('consentBanner').style.display = 'none';
+            reloadPage();
         }
 
         function acceptAnalyticsStorageOnly() {
             setCookie('ad_storage', 'denied', 365);
             setCookie('analytics_storage', 'granted', 365);
-            document.getElementById('consentBanner').style.display = 'none';
+            reloadPage();
         }
 
         function denyAllCookies() {
             setCookie('ad_storage', 'denied', 365);
             setCookie('analytics_storage', 'denied', 365);
-            document.getElementById('consentBanner').style.display = 'none';
+            reloadPage();
         }
 
         function setCookie(name, value, days) {
@@ -253,68 +305,26 @@
             return null;
         }
 
+        function reloadPage() {
+            window.location.reload();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             showPage('mainPage');
             showConsentBanner();
         });
     </script>
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','GTM-W83LVRV8');</script>
-        <!-- End Google Tag Manager -->
-    <!-- Google tag (gtag.js) -->
+    <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q0PEVWRF8V"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
-    gtag('config', 'G-Q0PEVWRF8V');
+        gtag('config', 'G-Q0PEVWRF8V', {
+            'ad_storage': getCookie('ad_storage') === 'granted' ? 'granted' : 'denied',
+            'analytics_storage': getCookie('analytics_storage') === 'granted' ? 'granted' : 'denied'
+        });
     </script>
-</head>
-<body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W83LVRV8"
-        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-        <!-- End Google Tag Manager (noscript) -->
-    <div id="mainPage" class="container" style="display: none;">
-        <h1>Welcome to the Bulletin Board</h1>
-        <div class="nav-links">
-            <a href="#!" onclick="showPage('managePostsPage')">Manage Posts</a>
-        </div>
-        <button onclick="showPostForm()">Add New Post</button>
-        <a href="https://example.com" onclick="trackEvent('link_click')">Visit Example.com</a>
-        <div id="posts"></div>
-        <button class="consent-button" onclick="showConsentBanner()">Update Consent</button>
-    </div>
-
-    <div id="managePostsPage" class="container" style="display: none;">
-        <h1>Manage Posts</h1>
-        <div class="nav-links">
-            <a href="#!" onclick="showPage('mainPage')">Back to Home</a>
-        </div>
-        <div id="managePosts"></div>
-        <button class="consent-button" onclick="showConsentBanner()">Update Consent</button>
-    </div>
-
-    <div id="postForm" class="container" style="display: none;">
-        <h1 id="formTitle">Add New Post</h1>
-        <input type="text" id="postTitle" placeholder="Post Title">
-        <button onclick="savePost()">Save</button>
-        <button onclick="hidePostForm()">Cancel</button>
-    </div>
-
-    <div id="consentBanner" class="consent-banner" style="display: none;">
-        <span>We use cookies to improve your experience on our site. Do you accept the use of cookies?</span>
-        <div>
-            <button onclick="acceptAllCookies()">Accept All</button>
-            <button onclick="acceptAdStorageOnly()">Accept Ad Storage Only</button>
-            <button onclick="acceptAnalyticsStorageOnly()">Accept Analytics Storage Only</button>
-            <button onclick="denyAllCookies()">Deny All</button>
-        </div>
-    </div>
 </body>
 </html>
